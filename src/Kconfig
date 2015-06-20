@@ -330,8 +330,26 @@ config RAM_CODE_SUPPORT
 endmenu
 
 source "src/mainboard/Kconfig"
-
 source "src/arch/*/Kconfig"
+
+config CBFS_SIZE
+	hex "Size of CBFS filesystem in ROM"
+	default 0x100000 if HAVE_INTEL_FIRMWARE || \
+	  NORTHBRIDGE_INTEL_GM45 || NORTHBRIDGE_INTEL_SANDYBRIDGE || \
+	  NORTHBRIDGE_INTEL_IVYBRIDGE || NORTHBRIDGE_INTEL_IVYBRIDGE_NATIVE || \
+	  NORTHBRIDGE_INTEL_SANDYBRIDGE_NATIVE || \
+	  NORTHBRIDGE_INTEL_NEHALEM || SOC_INTEL_BAYTRAIL || SOC_INTEL_BRASWELL || \
+	  SOC_INTEL_BROADWELL
+	default 0x200000 if SOC_INTEL_FSP_BAYTRAIL
+	default ROM_SIZE
+	help
+	  This is the part of the ROM actually managed by CBFS, located at the
+	  end of the ROM (passed through cbfstool -o) on x86 and at at the start
+	  of the ROM (passed through cbfstool -s) everywhere else. It defaults
+	  to span the whole ROM on all but Intel systems that use an Intel Firmware
+	  Descriptor.  It can be overridden to make coreboot live alongside other
+	  components like ChromeOS's vboot/FMAP or Intel's IFD / ME / TXE
+	  binaries.
 
 source "src/vendorcode/*/Kconfig"
 
@@ -356,6 +374,10 @@ comment "SoC"
 source "src/soc/*/*/Kconfig"
 source "src/drivers/intel/fsp1_0/Kconfig"
 
+source "src/southbridge/intel/common/firmware/Kconfig"
+source "src/vendorcode/*/Kconfig"
+
+source "src/arch/*/Kconfig"
 endmenu
 
 source "src/device/Kconfig"
