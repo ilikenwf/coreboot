@@ -1071,7 +1071,7 @@ size_t LZ4F_decompress(LZ4F_decompressionContext_t decompressionContext,
     }
 
     /* programmed as a state machine */
-
+#pragma GCC diagnostic ignored "-Wimplicit-fallthrough"
     while (doAnotherStage)
     {
 
@@ -1089,10 +1089,10 @@ size_t LZ4F_decompress(LZ4F_decompressionContext_t decompressionContext,
                 }
                 dctxPtr->tmpInSize = 0;
                 dctxPtr->tmpInTarget = minFHSize;   /* minimum to attempt decode */
-                dctxPtr->dStage = dstage_storeHeader;
-            }
+                dctxPtr->dStage = dstage_storeHeader; 
+            } // -fallthrough
 
-        case dstage_storeHeader:
+        case dstage_storeHeader: // -fallthrough
             {
                 size_t sizeToCopy = dctxPtr->tmpInTarget - dctxPtr->tmpInSize;
                 if (sizeToCopy > (size_t)(srcEnd - srcPtr)) sizeToCopy =  srcEnd - srcPtr;

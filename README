@@ -1,3 +1,8 @@
+T410 Notes:
+
+I used gcc-5 as the host CC/CXX. Your mileage may vary using newer versions.
+The cross compilation toolkit is an older one, as well.
+
 -------------------------------------------------------------------------------
 coreboot README
 -------------------------------------------------------------------------------
