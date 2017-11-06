@@ -12,10 +12,6 @@
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc.
  */
 
 #define THINKPAD_EC_GPE 17
@@ -49,6 +45,7 @@ DefinitionBlock(
 		{
 			#include <northbridge/intel/nehalem/acpi/nehalem.asl>
 			#include <southbridge/intel/bd82x6x/acpi/pch.asl>
+
 		}
 		Device (UNCR)
 		{
@@ -91,7 +88,7 @@ DefinitionBlock(
  */
 Scope (\_SB.PCI0.LPCB)
 {
-       #include <drivers/pc80/tpm/acpi/tpm.asl>
+	#include <drivers/pc80/tpm/acpi/tpm.asl>
 }
 
 	/* Chipset specific sleep states */

@@ -14,6 +14,10 @@
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc.
  */
 
 /* __PRE_RAM__ means: use "unsigned" for device, not a struct.  */
@@ -26,10 +30,8 @@
 #include <cpu/x86/lapic.h>
 #include <lib.h>
 #include <pc80/mc146818rtc.h>
-#include <romstage_handoff.h>
 #include <console/console.h>
 #include <cpu/x86/bist.h>
-#include <cpu/intel/romstage.h>
 #include <ec/acpi/ec.h>
 #include <delay.h>
 #include <timestamp.h>
@@ -45,6 +47,8 @@
 
 #include <northbridge/intel/nehalem/raminit.h>
 #include <southbridge/intel/ibexpeak/me.h>
+
+#include <ec/acpi/ec.h>
 
 static void pch_enable_lpc(void)
 {
@@ -176,7 +180,8 @@ static void set_fsb_frequency(void)
 	smbus_block_write(0x69, 0, 5, block);
 }
 
-void mainboard_romstage_entry(unsigned long bist)
+#include <cpu/intel/romstage.h>
+void main(unsigned long bist)
 {
 	u32 reg32;
 	int s3resume = 0;
@@ -278,15 +283,35 @@ void mainboard_romstage_entry(unsigned long bist)
 		outl(reg32 & ~(7 << 10), DEFAULT_PMBASE + 0x04);
 	}
 
+#if CONFIG_HAVE_ACPI_RESUME
+	/* If there is no high memory area, we didn't boot before, so
+	 * this is not a resume. In that case we just create the cbmem toc.
+	 */
+	if (s3resume) {
+		void *resume_backup_memory;
 
-	romstage_handoff_init(s3resume);
+		resume_backup_memory = cbmem_find(CBMEM_ID_RESUME);
 
-	if (s3resume)
-		acpi_prepare_for_resume();
-	else
+		/* copy 1MB - 64K to high tables ram_base to prevent memory corruption
+		 * through stage 2. We could keep stuff like stack and heap in high tables
+		 * memory completely, but that's a wonderful clean up task for another
+		 * day.
+		 */
+		if (resume_backup_memory)
+			memcpy(resume_backup_memory, (void *)CONFIG_RAMBASE,
+			       HIGH_MEMORY_SAVE);
+
+		/* Magic for S3 resume */
+		pci_write_config32(PCI_DEV(0, 0x00, 0), SKPAD, 0xcafed00d);
+	} else {
+		pci_write_config32(PCI_DEV(0, 0x00, 0), SKPAD, 0xcafebabe);
 		quick_ram_check();
+	}
+#endif
 
 #if CONFIG_LPC_TPM
 	init_tpm(s3resume);
 #endif
+
+	timestamp_add_now(TS_END_ROMSTAGE);
 }
