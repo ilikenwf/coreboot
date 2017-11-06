@@ -17,6 +17,8 @@
  * Foundation, Inc.
  */
 
+#include <stdint.h>
+
 #ifndef _EC_ACPI_H
 #define _EC_ACPI_H
 
