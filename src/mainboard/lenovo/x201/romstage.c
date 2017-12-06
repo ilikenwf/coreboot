@@ -42,11 +42,37 @@
 #include "gpio.h"
 #include "dock.h"
 #include "arch/early_variables.h"
+
+#include <drivers/lenovo/hybrid_graphics/hybrid_graphics.h>
+
 #include <southbridge/intel/ibexpeak/pch.h>
 #include <northbridge/intel/nehalem/nehalem.h>
 
 #include <northbridge/intel/nehalem/raminit.h>
 #include <southbridge/intel/ibexpeak/me.h>
+
+static void hybrid_graphics_init(void)
+{
+	bool peg, igd;
+	u32 reg32;
+
+	early_hybrid_graphics(&igd, &peg);
+
+	/* Hide disabled devices */
+	reg32 = pci_read_config32(PCI_DEV(0, 0, 0), D0F0_DEVEN);
+	reg32 &= ~(DEVEN_PEG10 | DEVEN_IGD);
+
+	if (peg)
+		reg32 |= DEVEN_PEG10;
+
+	if (igd)
+		reg32 |= DEVEN_IGD;
+	else
+		/* Disable IGD VGA decode, no GTT or GFX stolen */
+		pci_write_config16(PCI_DEV(0, 0, 0), D0F0_GGC, 2);
+
+	pci_write_config32(PCI_DEV(0, 0, 0), D0F0_DEVEN, reg32);
+}
 
 static void pch_enable_lpc(void)
 {
@@ -204,7 +230,8 @@ void main(unsigned long bist)
 	pci_write_config8(PCH_LPC_DEV, GPIO_CNTL, 0x10);
 
 	setup_pch_gpios(&x201_gpio_map);
-
+	
+	hybrid_graphics_init();
 
 	/* This should probably go away. Until now it is required
 	 * and mainboard specific
